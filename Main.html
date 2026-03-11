@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game - Premium Edition</title>
+
+    <!-- Google Fonts for Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Chessboard.js Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+
+    <style>
+        :root {
+            /* Dark Theme (Default) */
+            --bg-color: #0f172a;
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-end: #000000;
+            --board-border: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --danger-color: #ef4444;
+            --panel-bg: rgba(15, 23, 42, 0.8);
+            --panel-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --board-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            --status-bg: rgba(0, 0, 0, 0.3);
+            --h1-gradient-start: #60a5fa;
+            --h1-gradient-end: #c084fc;
+            --h1-shadow: rgba(96, 165, 250, 0.2);
+            --toggle-bg: rgba(255, 255, 255, 0.1);
+            --toggle-hover: rgba(255, 255, 255, 0.2);
+            --border-subtle: rgba(255, 255, 255, 0.1);
+            --border-light: rgba(255, 255, 255, 0.05);
+        }
+
+        .light-theme {
+            /* Light Theme */
+            --bg-color: #f8fafc;
+            --bg-gradient-start: #f8fafc;
+            --bg-gradient-end: #f1f5f9;
+            --board-border: #cbd5e1;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-color: #0ea5e9;
+            --accent-hover: #0284c7;
+            --danger-color: #dc2626;
+            --panel-bg: rgba(226, 232, 240, 0.9);
+            --panel-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --board-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --status-bg: rgba(255, 255, 255, 0.5);
+            --h1-gradient-start: #0284c7;
+            --h1-gradient-end: #2dd4bf;
+            --h1-shadow: rgba(2, 132, 199, 0.1);
+            --toggle-bg: rgba(0, 0, 0, 0.05);
+            --toggle-hover: rgba(0, 0, 0, 0.1);
+            --border-subtle: rgba(0, 0, 0, 0.1);
+            --border-light: rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top, var(--bg-gradient-start), var(--bg-gradient-end));
+            color: var(--text-primary);
+            text-align: center;
+            margin: 0;
+            padding: 2px 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+            max-width: 800px;
+            width: 100%;
+            padding: 1px;
+        }
+
+        .logo-container {
+            margin: 0;
+            padding: 0;
+        }
+
+        .logo {
+            max-width: 220px;
+            height: auto;
+            transition: transform 0.3s ease;
+            mix-blend-mode: multiply;
+            /* Removes white background in light mode */
+        }
+
+        .logo:hover {
+            transform: scale(1.02);
+        }
+
+        /* Dark mode logo optimization */
+        body:not(.light-theme) .logo {
+            filter: invert(1) brightness(1.2);
+            mix-blend-mode: screen;
+            /* Removes black (inverted white) background in dark mode */
+        }
+
+        .game-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--panel-shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .game-panel:hover {
+            transform: translateY(-5px);
+        }
+
+        #board {
+            width: 500px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            border: 4px solid var(--board-border);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 25px;
+            padding: 0 10px;
+        }
+
+        #status {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--status-bg);
+            padding: 12px 24px;
+            border-radius: 12px;
+            min-width: 250px;
+            border: 1px solid var(--border-light);
+        }
+
+        button {
+            background: var(--accent-color);
+            color: white;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--toggle-bg);
+            color: var(--text-primary);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid var(--border-subtle);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background: var(--toggle-hover);
+            transform: rotate(15deg);
+        }
+
+        .theme-toggle .icon-sun {
+            display: none;
+        }
+
+        .theme-toggle .icon-moon {
+            display: block;
+        }
+
+        .light-theme .theme-toggle .icon-sun {
+            display: block;
+        }
+
+        .light-theme .theme-toggle .icon-moon {
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            #board {
+                width: 90vw;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        /* Custom Chessboard Colors */
+        .white-1e1d7 {
+            background-color: #ffffff;
+            color: #b58863;
+        }
+
+        .black-3c85d {
+            background-color: #000;
+            color: #f0d9b5;
+        }
+
+        /* Golden Black Pieces Effect */
+        img[data-piece^="b"] {
+            filter: invert(80%) sepia(54%) saturate(718%) hue-rotate(345deg) brightness(93%) contrast(88%);
+        }
+
+        /* White pieces become black in light mode */
+        .light-theme img[data-piece^="w"] {
+            filter: invert(100%) brightness(20%);
+        }
+
+        /* Tap to move highlight */
+        .highlight-square {
+            box-shadow: inset 0 0 0 5px rgba(234, 179, 8, 0.9) !important;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+        <!-- Moon Icon -->
+        <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <!-- Sun Icon -->
+        <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+    </div>
+
+    <div class="container">
+        <div class="logo-container">
+            <img src="logo.png" alt="Chess Logo" class="logo">
+        </div>
+
+        <div class="game-panel">
+            <div id="board"></div>
+
+            <div class="controls">
+                <div id="status">Active match will start shortly...</div>
+                <button onclick="resetGame()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                    Restart
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+
+    <script>
+        const game = new Chess();
+        const statusDiv = document.getElementById("status");
+
+        // --- THEME LOGIC ---
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('light-theme');
+            const isLight = body.classList.contains('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        }
+
+        // Initialize theme from localStorage
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-theme');
+        }
+
+        // --- AI LOGIC (Minimax with Alpha-Beta Pruning) ---
+
+        // Piece values for evaluation
+        const pieceValues = {
+            'p': 100,
+            'n': 320,
+            'b': 330,
+            'r': 500,
+            'q': 900,
+            'k': 20000
+        };
+
+        // Basic position evaluation
+        function evaluateBoard(board) {
+            let totalEvaluation = 0;
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    totalEvaluation = totalEvaluation + getPieceValue(board[i][j]);
+                }
+            }
+            return totalEvaluation;
+        }
+
+        function getPieceValue(piece) {
+            if (piece === null) {
+                return 0;
+            }
+            function getAbsoluteValue(piece) {
+                return pieceValues[piece.type] || 0;
+            }
+            // White pieces are positive, Black pieces are negative
+            return piece.color === 'w' ? getAbsoluteValue(piece) : -getAbsoluteValue(piece);
+        }
+
+        function minimax(depth, game, alpha, beta, isMaximizingPlayer) {
+            if (depth === 0 || game.game_over()) {
+                return evaluateBoard(game.board());
+            }
+
+            const possibleMoves = game.moves();
+
+            if (isMaximizingPlayer) {
+                let bestVal = -Infinity;
+                for (let i = 0; i < possibleMoves.length; i++) {
+                    game.move(possibleMoves[i]);
+                    bestVal = Math.max(bestVal, minimax(depth - 1, game, alpha, beta, !isMaximizingPlayer));
+                    game.undo();
+                    alpha = Math.max(alpha, bestVal);
+                    if (beta <= alpha) {
+                        break;
+                    }
+                }
+                return bestVal;
+            } else {
+                let bestVal = Infinity;
+                for (let i = 0; i < possibleMoves.length; i++) {
+                    game.move(possibleMoves[i]);
+                    bestVal = Math.min(bestVal, minimax(depth - 1, game, alpha, beta, !isMaximizingPlayer));
+                    game.undo();
+                    beta = Math.min(beta, bestVal);
+                    if (beta <= alpha) {
+                        break;
+                    }
+                }
+                return bestVal;
+            }
+        }
+
+        function makeBestMove() {
+            if (game.game_over()) return;
+
+            const possibleMoves = game.moves();
+            if (possibleMoves.length === 0) return;
+
+            statusDiv.innerHTML = "Thinking...";
+            statusDiv.style.color = '#fbbf24';
+
+            // Use setTimeout to allow UI to update to "Thinking..." before heavy computation
+            setTimeout(() => {
+                let bestMove = null;
+                // Black acts as the minimizing player
+                let bestValue = Infinity;
+                const searchDepth = 3;
+
+                // Simple move ordering: sort to potentially get cutoffs faster
+                possibleMoves.sort(() => Math.random() - 0.5);
+
+                for (let i = 0; i < possibleMoves.length; i++) {
+                    const move = possibleMoves[i];
+                    game.move(move);
+
+                    // After Black moves, it's White's turn (maximizing player)
+                    const boardValue = minimax(searchDepth - 1, game, -Infinity, Infinity, true);
+                    game.undo();
+
+                    if (boardValue < bestValue) {
+                        bestValue = boardValue;
+                        bestMove = move;
+                    }
+                }
+
+                if (bestMove === null) {
+                    bestMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                }
+
+                game.move(bestMove);
+                board.position(game.fen());
+                updateStatus();
+            }, 50);
+        }
+
+        let selectedSquare = null;
+
+        function clearHighlights() {
+            $('#board .square-55d63').removeClass('highlight-square');
+        }
+
+        const board = Chessboard("board", {
+            draggable: false,
+            position: "start",
+            showNotation: false,
+            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+        });
+
+        // Tap to move logic
+        $('#board').on('click', '.square-55d63', function () {
+            // Cannot move if it's not the user's turn or game over
+            if (game.game_over() || game.turn() === 'b') return;
+
+            const square = $(this).attr('data-square');
+            const piece = game.get(square);
+
+            if (selectedSquare === null) {
+                // Ensure the user can only select White pieces
+                if (!piece || piece.color !== 'w') return;
+
+                selectedSquare = square;
+                $(this).addClass('highlight-square');
+            } else {
+                const move = game.move({
+                    from: selectedSquare,
+                    to: square,
+                    promotion: "q"
+                });
+
+                if (move === null) {
+                    // Clicking another white piece changes selection
+                    if (piece && piece.color === 'w') {
+                        selectedSquare = square;
+                        clearHighlights();
+                        $(this).addClass('highlight-square');
+                    } else {
+                        // Clicking an invalid square or empty space cancels selection
+                        selectedSquare = null;
+                        clearHighlights();
+                    }
+                } else {
+                    board.position(game.fen());
+                    selectedSquare = null;
+                    clearHighlights();
+                    updateStatus();
+
+                    // Trigger AI response after a short delay
+                    if (!game.game_over()) {
+                        window.setTimeout(makeBestMove, 250);
+                    }
+                }
+            }
+        });
+
+        function updateStatus() {
+            let status = "";
+            let moveColor = game.turn() === "w" ? "White" : "Black";
+
+            // Checkmate?
+            if (game.in_checkmate()) {
+                status = "Game over, " + moveColor + " is in checkmate.";
+                statusDiv.style.color = 'var(--danger-color)';
+            }
+            // Draw?
+            else if (game.in_draw()) {
+                status = "Game over, drawn position.";
+                statusDiv.style.color = 'var(--text-secondary)';
+            }
+            // Game still on
+            else {
+                if (game.turn() === 'w') {
+                    status = "Your Turn";
+                } else {
+                    status = "Computer's Turn";
+                }
+                statusDiv.style.color = 'var(--text-primary)';
+
+                // Check?
+                if (game.in_check()) {
+                    status += " (Check)";
+                    statusDiv.style.color = '#fbbf24'; // Warning color (amber)
+                }
+            }
+
+            statusDiv.innerHTML = status;
+        }
+
+        function resetGame() {
+            game.reset();
+            board.start();
+            selectedSquare = null;
+            clearHighlights();
+            updateStatus();
+            statusDiv.style.color = 'var(--text-primary)';
+        }
+
+        // Initialize status on load
+        updateStatus();
+    </script>
+
+</body>
+
+</html>
